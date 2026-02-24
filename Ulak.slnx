@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Ulak/Ulak.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Ulak.Tests/Ulak.Tests.csproj" />
+  </Folder>
+</Solution>
