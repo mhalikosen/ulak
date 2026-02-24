@@ -1,5 +1,7 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Ulak.Internal;
 
 namespace Ulak;
@@ -13,12 +15,13 @@ public static class ServiceCollectionExtensions
         typeof(IQueryHandler<,>)
     ];
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public static IServiceCollection AddUlak(this IServiceCollection services)
         => AddUlak(services, Assembly.GetCallingAssembly());
 
     public static IServiceCollection AddUlak(this IServiceCollection services, params Assembly[] assemblies)
     {
-        services.AddScoped<ISender, Sender>();
+        services.TryAddScoped<ISender, Sender>();
 
         foreach (var assembly in assemblies)
         {
