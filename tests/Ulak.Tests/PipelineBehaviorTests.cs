@@ -4,11 +4,21 @@ namespace Ulak.Tests;
 
 public record PingCommand(string Message) : ICommand<string>;
 
+public record VoidPingCommand(string Message) : ICommand;
+
 public class PingHandler : ICommandHandler<PingCommand, string>
 {
     public Task<string> HandleAsync(PingCommand command, CancellationToken cancellationToken)
     {
         return Task.FromResult(command.Message);
+    }
+}
+
+public class VoidPingHandler : ICommandHandler<VoidPingCommand>
+{
+    public Task HandleAsync(VoidPingCommand command, CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
 }
 
@@ -38,16 +48,19 @@ public class ThrowingBehavior : IPipelineBehavior<PingCommand, string>
     }
 }
 
-public class OrderTrackingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+public class ExecutionTracker
+{
+    public List<string> Log { get; } = [];
+}
+
+public class OrderTrackingBehavior<TRequest, TResponse>(ExecutionTracker tracker) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    public static List<string> ExecutionLog { get; } = [];
-
     public async Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-        ExecutionLog.Add($"Before:{typeof(TRequest).Name}");
+        tracker.Log.Add($"Before:{typeof(TRequest).Name}");
         var result = await next();
-        ExecutionLog.Add($"After:{typeof(TRequest).Name}");
+        tracker.Log.Add($"After:{typeof(TRequest).Name}");
         return result;
     }
 }
@@ -101,16 +114,18 @@ public class PipelineBehaviorTests
     [Fact]
     public async Task OpenGenericBehavior_AppliesAcrossRequestTypes()
     {
-        OrderTrackingBehavior<PingCommand, string>.ExecutionLog.Clear();
-
         var services = new ServiceCollection();
         services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
+        services.AddScoped<ExecutionTracker>();
         services.AddUlakBehavior(typeof(OrderTrackingBehavior<,>));
-        var sender = services.BuildServiceProvider().GetRequiredService<ISender>();
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        var tracker = scope.ServiceProvider.GetRequiredService<ExecutionTracker>();
 
         await sender.SendAsync(new PingCommand("test"));
 
-        Assert.Equal(["Before:PingCommand", "After:PingCommand"], OrderTrackingBehavior<PingCommand, string>.ExecutionLog);
+        Assert.Equal(["Before:PingCommand", "After:PingCommand"], tracker.Log);
     }
 
     [Fact]
@@ -124,5 +139,22 @@ public class PipelineBehaviorTests
         var result = await sender.SendAsync(new PingCommand("direct"));
 
         Assert.Equal("direct", result);
+    }
+
+    [Fact]
+    public async Task OpenGenericBehavior_AppliesOnVoidCommand()
+    {
+        var services = new ServiceCollection();
+        services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
+        services.AddScoped<ExecutionTracker>();
+        services.AddUlakBehavior(typeof(OrderTrackingBehavior<,>));
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        var tracker = scope.ServiceProvider.GetRequiredService<ExecutionTracker>();
+
+        await sender.SendAsync(new VoidPingCommand("test"));
+
+        Assert.Equal(["Before:VoidPingCommand", "After:VoidPingCommand"], tracker.Log);
     }
 }

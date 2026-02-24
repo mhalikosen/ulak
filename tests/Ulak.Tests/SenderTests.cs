@@ -10,9 +10,13 @@ public record GetOrder(Guid Id) : IQuery<OrderDto>;
 
 public record OrderDto(Guid Id, string Product);
 
+public record CancellableCommand : ICommand;
+
+public record CommandNeedingDep(string Value) : ICommand<string>;
+
 public class CreateOrderHandler : ICommandHandler<CreateOrder>
 {
-    public static bool WasHandled { get; set; }
+    public bool WasHandled { get; private set; }
 
     public Task HandleAsync(CreateOrder command, CancellationToken cancellationToken)
     {
@@ -23,7 +27,7 @@ public class CreateOrderHandler : ICommandHandler<CreateOrder>
 
 public class CreateOrderWithIdHandler : ICommandHandler<CreateOrderWithId, Guid>
 {
-    public static Guid GeneratedId { get; set; }
+    public Guid GeneratedId { get; private set; }
 
     public Task<Guid> HandleAsync(CreateOrderWithId command, CancellationToken cancellationToken)
     {
@@ -40,43 +44,73 @@ public class GetOrderHandler : IQueryHandler<GetOrder, OrderDto>
     }
 }
 
+public class CancellableCommandHandler : ICommandHandler<CancellableCommand>
+{
+    public Task HandleAsync(CancellableCommand command, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.CompletedTask;
+    }
+}
+
+public class ExternalService
+{
+    public string Prefix { get; } = "processed";
+}
+
+public class CommandNeedingDepHandler(ExternalService externalService) : ICommandHandler<CommandNeedingDep, string>
+{
+    public Task<string> HandleAsync(CommandNeedingDep command, CancellationToken cancellationToken)
+    {
+        return Task.FromResult($"{externalService.Prefix}:{command.Value}");
+    }
+}
+
 public class SenderTests
 {
-    private ISender CreateSender()
+    private ServiceProvider CreateProvider()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(SenderTests).Assembly);
-        var provider = services.BuildServiceProvider();
-        return provider.GetRequiredService<ISender>();
+        services.AddScoped<ExternalService>();
+        return services.BuildServiceProvider();
     }
 
     [Fact]
     public async Task SendAsync_VoidCommand_ExecutesHandler()
     {
-        CreateOrderHandler.WasHandled = false;
-        var sender = CreateSender();
+        using var provider = CreateProvider();
+        using var scope = provider.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
 
         var result = await sender.SendAsync(new CreateOrder("Widget", 5));
 
         Assert.Equal(Unit.Value, result);
-        Assert.True(CreateOrderHandler.WasHandled);
+
+        var handler = scope.ServiceProvider.GetRequiredService<ICommandHandler<CreateOrder>>();
+        Assert.True(((CreateOrderHandler)handler).WasHandled);
     }
 
     [Fact]
     public async Task SendAsync_CommandWithResponse_ReturnsResponse()
     {
-        var sender = CreateSender();
+        using var provider = CreateProvider();
+        using var scope = provider.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
 
         var id = await sender.SendAsync(new CreateOrderWithId("Widget"));
 
         Assert.NotEqual(Guid.Empty, id);
-        Assert.Equal(CreateOrderWithIdHandler.GeneratedId, id);
+
+        var handler = scope.ServiceProvider.GetRequiredService<ICommandHandler<CreateOrderWithId, Guid>>();
+        Assert.Equal(((CreateOrderWithIdHandler)handler).GeneratedId, id);
     }
 
     [Fact]
     public async Task SendAsync_Query_ReturnsResponse()
     {
-        var sender = CreateSender();
+        using var provider = CreateProvider();
+        var sender = provider.GetRequiredService<ISender>();
         var orderId = Guid.NewGuid();
 
         var result = await sender.SendAsync(new GetOrder(orderId));
@@ -88,9 +122,33 @@ public class SenderTests
     [Fact]
     public async Task SendAsync_NullRequest_ThrowsArgumentNullException()
     {
-        var sender = CreateSender();
+        using var provider = CreateProvider();
+        var sender = provider.GetRequiredService<ISender>();
 
         await Assert.ThrowsAsync<ArgumentNullException>(()
             => sender.SendAsync<Unit>(null!));
+    }
+
+    [Fact]
+    public async Task SendAsync_CancelledToken_ThrowsOperationCancelledException()
+    {
+        using var provider = CreateProvider();
+        var sender = provider.GetRequiredService<ISender>();
+        using var cancellationTokenSource = new CancellationTokenSource();
+        await cancellationTokenSource.CancelAsync();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(()
+            => sender.SendAsync(new CancellableCommand(), cancellationTokenSource.Token));
+    }
+
+    [Fact]
+    public async Task SendAsync_HandlerWithDependency_ResolvesDependency()
+    {
+        using var provider = CreateProvider();
+        var sender = provider.GetRequiredService<ISender>();
+
+        var result = await sender.SendAsync(new CommandNeedingDep("test"));
+
+        Assert.Equal("processed:test", result);
     }
 }

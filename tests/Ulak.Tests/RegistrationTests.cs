@@ -61,6 +61,7 @@ public class RegistrationTests
         var services = new ServiceCollection();
         services.AddUlak(typeof(RegistrationTests).Assembly);
         services.AddUlakBehavior(typeof(OrderTrackingBehavior<,>));
+        services.AddScoped<ExecutionTracker>();
         var provider = services.BuildServiceProvider();
 
         var behaviors = provider.GetServices<IPipelineBehavior<PingCommand, string>>();
@@ -79,5 +80,18 @@ public class RegistrationTests
         var sender = provider.GetService<ISender>();
 
         Assert.NotNull(sender);
+    }
+
+    [Fact]
+    public void AddUlak_DuplicateRegistration_FirstHandlerWins()
+    {
+        var services = new ServiceCollection();
+        // Register same assembly twice — TryAddScoped should prevent duplicates
+        services.AddUlak(typeof(RegistrationTests).Assembly, typeof(RegistrationTests).Assembly);
+        var provider = services.BuildServiceProvider();
+
+        var handlers = provider.GetServices<ICommandHandler<CreateOrder>>();
+
+        Assert.Single(handlers);
     }
 }
