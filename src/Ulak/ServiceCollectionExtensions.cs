@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Ulak.Internal;
@@ -14,10 +13,6 @@ public static class ServiceCollectionExtensions
         typeof(ICommandHandler<,>),
         typeof(IQueryHandler<,>)
     ];
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    public static IServiceCollection AddUlak(this IServiceCollection services)
-        => AddUlak(services, Assembly.GetCallingAssembly());
 
     public static IServiceCollection AddUlak(this IServiceCollection services, params Assembly[] assemblies)
     {
@@ -67,7 +62,7 @@ public static class ServiceCollectionExtensions
 
             foreach (var handlerInterface in implementedInterfaces)
             {
-                services.AddScoped(handlerInterface, concreteType);
+                services.TryAddScoped(handlerInterface, concreteType);
             }
         }
     }
