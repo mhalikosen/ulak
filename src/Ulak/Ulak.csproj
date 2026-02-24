@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Ulak</RootNamespace>
+
+        <PackageId>Ulak</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>mhalikosen</Authors>
+        <Description>Lightweight CQRS mediator library for .NET</Description>
+        <PackageProjectUrl>https://github.com/mhalikosen/ulak</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/mhalikosen/ulak</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageTags>cqrs;mediator;command;query;handler;pipeline</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-preview.1.25080.5" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="../../README.md" Pack="true" PackagePath="/" />
+    </ItemGroup>
+
+</Project>
