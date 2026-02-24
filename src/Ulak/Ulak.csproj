@@ -7,7 +7,7 @@
         <RootNamespace>Ulak</RootNamespace>
 
         <PackageId>Ulak</PackageId>
-        <Version>1.0.0</Version>
+        <Version>0.1.0</Version>
         <Authors>mhalikosen</Authors>
         <Description>Lightweight CQRS mediator library for .NET</Description>
         <PackageProjectUrl>https://github.com/mhalikosen/ulak</PackageProjectUrl>
@@ -16,7 +16,16 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>cqrs;mediator;command;query;handler;pipeline</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <DebugType>embedded</DebugType>
+        <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
     </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Ulak.Tests" />
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0-preview.1.25080.5" />
