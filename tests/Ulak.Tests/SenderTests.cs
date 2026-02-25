@@ -85,7 +85,7 @@ public class SenderTests
         using var scope = provider.CreateScope();
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();
 
-        var result = await sender.SendAsync(new CreateOrder("Widget", 5));
+        var result = await sender.SendAsync<Unit>(new CreateOrder("Widget", 5));
 
         Assert.Equal(Unit.Value, result);
 
@@ -165,5 +165,28 @@ public class SenderTests
 
         Assert.Contains("No handler registered for command", exception.Message);
         Assert.Contains("UnregisteredCommand", exception.Message);
+    }
+
+    [Fact]
+    public async Task SendAsync_NonGenericVoidCommand_ExecutesHandler()
+    {
+        using var provider = CreateProvider();
+        using var scope = provider.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+
+        await sender.SendAsync(new CreateOrder("Widget", 5));
+
+        var handler = scope.ServiceProvider.GetRequiredService<ICommandHandler<CreateOrder>>();
+        Assert.True(((CreateOrderHandler)handler).WasHandled);
+    }
+
+    [Fact]
+    public async Task SendAsync_NonGenericNullCommand_ThrowsArgumentNullException()
+    {
+        using var provider = CreateProvider();
+        var sender = provider.GetRequiredService<ISender>();
+
+        await Assert.ThrowsAsync<ArgumentNullException>(()
+            => sender.SendAsync((ICommand)null!));
     }
 }

@@ -18,6 +18,11 @@ internal sealed class Sender(IServiceProvider serviceProvider) : ISender
         return wrapper.HandleAsync(request, serviceProvider, cancellationToken);
     }
 
+    public async Task SendAsync(ICommand command, CancellationToken cancellationToken = default)
+    {
+        await SendAsync<Unit>(command, cancellationToken);
+    }
+
     private static object CreateWrapper<TResponse>(Type requestType)
     {
         var responseType = typeof(TResponse);
