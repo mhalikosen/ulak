@@ -47,7 +47,14 @@ public static class ServiceCollectionExtensions
                     nameof(behaviorType));
             }
 
-            services.AddScoped(typeof(IPipelineBehavior<,>), behaviorType);
+            var alreadyRegistered = services.Any(descriptor =>
+                descriptor.ServiceType == typeof(IPipelineBehavior<,>) &&
+                descriptor.ImplementationType == behaviorType);
+
+            if (!alreadyRegistered)
+            {
+                services.AddScoped(typeof(IPipelineBehavior<,>), behaviorType);
+            }
         }
         else
         {
@@ -66,7 +73,14 @@ public static class ServiceCollectionExtensions
 
             foreach (var pipelineInterface in pipelineInterfaces)
             {
-                services.AddScoped(pipelineInterface, behaviorType);
+                var alreadyRegistered = services.Any(descriptor =>
+                    descriptor.ServiceType == pipelineInterface &&
+                    descriptor.ImplementationType == behaviorType);
+
+                if (!alreadyRegistered)
+                {
+                    services.AddScoped(pipelineInterface, behaviorType);
+                }
             }
         }
 
@@ -78,11 +92,17 @@ public static class ServiceCollectionExtensions
         Type[] types;
         try
         {
-            types = assembly.GetTypes();
+            types = assembly.GetExportedTypes();
         }
         catch (ReflectionTypeLoadException exception)
         {
             types = exception.Types.OfType<Type>().ToArray();
+
+            foreach (var loaderException in exception.LoaderExceptions.OfType<Exception>())
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"Ulak: Failed to load type from assembly '{assembly.FullName}': {loaderException.Message}");
+            }
         }
 
         var concreteTypes = types

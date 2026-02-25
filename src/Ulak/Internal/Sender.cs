@@ -5,21 +5,23 @@ namespace Ulak.Internal;
 
 internal sealed class Sender(IServiceProvider serviceProvider) : ISender
 {
-    private static readonly ConcurrentDictionary<(Type, Type), object> HandlerWrappers = new();
+    private static readonly ConcurrentDictionary<Type, Lazy<object>> HandlerWrappers = new();
 
     public Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 
         var wrapper = (RequestHandlerBase<TResponse>)HandlerWrappers.GetOrAdd(
-            (request.GetType(), typeof(TResponse)),
-            key => CreateWrapper<TResponse>(key.Item1));
+            request.GetType(),
+            requestType => new Lazy<object>(() => CreateWrapper<TResponse>(requestType))).Value;
 
         return wrapper.HandleAsync(request, serviceProvider, cancellationToken);
     }
 
     public async Task SendAsync(ICommand command, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(command);
+
         await SendAsync<Unit>(command, cancellationToken);
     }
 
