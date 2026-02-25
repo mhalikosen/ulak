@@ -94,4 +94,49 @@ public class RegistrationTests
 
         Assert.Single(handlers);
     }
+
+    [Fact]
+    public void AddUlak_NullAssemblies_ThrowsArgumentNullException()
+    {
+        var services = new ServiceCollection();
+
+        Assert.Throws<ArgumentNullException>(()
+            => services.AddUlak(null!));
+    }
+
+    [Fact]
+    public void AddUlak_EmptyAssemblies_ThrowsArgumentOutOfRangeException()
+    {
+        var services = new ServiceCollection();
+
+        Assert.Throws<ArgumentOutOfRangeException>(()
+            => services.AddUlak());
+    }
+
+    [Fact]
+    public void AddUlakBehavior_NullType_ThrowsArgumentNullException()
+    {
+        var services = new ServiceCollection();
+
+        Assert.Throws<ArgumentNullException>(()
+            => services.AddUlakBehavior(null!));
+    }
+
+    [Fact]
+    public void AddUlakBehavior_InvalidType_ThrowsArgumentException()
+    {
+        var services = new ServiceCollection();
+
+        Assert.Throws<ArgumentException>(()
+            => services.AddUlakBehavior(typeof(string)));
+    }
+
+    [Fact]
+    public void AddUlakBehavior_InvalidOpenGenericType_ThrowsArgumentException()
+    {
+        var services = new ServiceCollection();
+
+        Assert.Throws<ArgumentException>(()
+            => services.AddUlakBehavior(typeof(List<>)));
+    }
 }
