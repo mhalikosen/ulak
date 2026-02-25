@@ -17,9 +17,11 @@ internal abstract class RequestHandlerBase<TResponse>
         where TRequest : IRequest<TResponse>
     {
         var next = handlerDelegate;
+        var behaviorArray = behaviors as IPipelineBehavior<TRequest, TResponse>[] ?? behaviors.ToArray();
 
-        foreach (var behavior in behaviors.Reverse())
+        for (var i = behaviorArray.Length - 1; i >= 0; i--)
         {
+            var behavior = behaviorArray[i];
             var current = next;
             next = () => behavior.HandleAsync(request, current, cancellationToken);
         }
@@ -36,7 +38,11 @@ internal sealed class CommandHandlerWrapper<TCommand, TResponse> : RequestHandle
         IServiceProvider serviceProvider,
         CancellationToken cancellationToken)
     {
-        var handler = serviceProvider.GetRequiredService<ICommandHandler<TCommand, TResponse>>();
+        var handler = serviceProvider.GetService<ICommandHandler<TCommand, TResponse>>()
+            ?? throw new InvalidOperationException(
+                $"No handler registered for command '{typeof(TCommand).Name}'. " +
+                $"Register an ICommandHandler<{typeof(TCommand).Name}, {typeof(TResponse).Name}> implementation.");
+
         var behaviors = serviceProvider.GetServices<IPipelineBehavior<TCommand, TResponse>>();
 
         RequestHandlerDelegate<TResponse> handlerDelegate = ()
@@ -54,7 +60,11 @@ internal sealed class VoidCommandHandlerWrapper<TCommand> : RequestHandlerBase<U
         IServiceProvider serviceProvider,
         CancellationToken cancellationToken)
     {
-        var handler = serviceProvider.GetRequiredService<ICommandHandler<TCommand>>();
+        var handler = serviceProvider.GetService<ICommandHandler<TCommand>>()
+            ?? throw new InvalidOperationException(
+                $"No handler registered for command '{typeof(TCommand).Name}'. " +
+                $"Register an ICommandHandler<{typeof(TCommand).Name}> implementation.");
+
         var behaviors = serviceProvider.GetServices<IPipelineBehavior<TCommand, Unit>>();
 
         RequestHandlerDelegate<Unit> handlerDelegate = () =>
@@ -85,7 +95,11 @@ internal sealed class QueryHandlerWrapper<TQuery, TResponse> : RequestHandlerBas
         IServiceProvider serviceProvider,
         CancellationToken cancellationToken)
     {
-        var handler = serviceProvider.GetRequiredService<IQueryHandler<TQuery, TResponse>>();
+        var handler = serviceProvider.GetService<IQueryHandler<TQuery, TResponse>>()
+            ?? throw new InvalidOperationException(
+                $"No handler registered for query '{typeof(TQuery).Name}'. " +
+                $"Register an IQueryHandler<{typeof(TQuery).Name}, {typeof(TResponse).Name}> implementation.");
+
         var behaviors = serviceProvider.GetServices<IPipelineBehavior<TQuery, TResponse>>();
 
         RequestHandlerDelegate<TResponse> handlerDelegate = ()

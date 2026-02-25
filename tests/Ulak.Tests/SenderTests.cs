@@ -10,6 +10,8 @@ public record GetOrder(Guid Id) : IQuery<OrderDto>;
 
 public record OrderDto(Guid Id, string Product);
 
+public record UnregisteredCommand : ICommand;
+
 public record CancellableCommand : ICommand;
 
 public record CommandNeedingDep(string Value) : ICommand<string>;
@@ -150,5 +152,18 @@ public class SenderTests
         var result = await sender.SendAsync(new CommandNeedingDep("test"));
 
         Assert.Equal("processed:test", result);
+    }
+
+    [Fact]
+    public async Task SendAsync_MissingHandler_ThrowsDescriptiveError()
+    {
+        using var provider = CreateProvider();
+        var sender = provider.GetRequiredService<ISender>();
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(()
+            => sender.SendAsync(new UnregisteredCommand()));
+
+        Assert.Contains("No handler registered for command", exception.Message);
+        Assert.Contains("UnregisteredCommand", exception.Message);
     }
 }
