@@ -123,4 +123,30 @@ public class SenderTests
         await Assert.ThrowsAsync<ArgumentNullException>(()
             => sender.SendAsync((ICommand)null!, TestContext.Current.CancellationToken));
     }
+
+    [Fact]
+    public async Task SendAsyncThrowsDescriptiveErrorForMissingQueryHandler()
+    {
+        using var provider = CreateProvider();
+        var sender = provider.GetRequiredService<ISender>();
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(()
+            => sender.SendAsync(new UnregisteredQuery(), TestContext.Current.CancellationToken));
+
+        Assert.Contains("No handler registered for query", exception.Message);
+        Assert.Contains("UnregisteredQuery", exception.Message);
+    }
+
+    [Fact]
+    public async Task SendAsyncThrowsDescriptiveErrorForMissingCommandWithResponseHandler()
+    {
+        using var provider = CreateProvider();
+        var sender = provider.GetRequiredService<ISender>();
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(()
+            => sender.SendAsync(new UnregisteredCommandWithResponse(), TestContext.Current.CancellationToken));
+
+        Assert.Contains("No handler registered for command", exception.Message);
+        Assert.Contains("UnregisteredCommandWithResponse", exception.Message);
+    }
 }

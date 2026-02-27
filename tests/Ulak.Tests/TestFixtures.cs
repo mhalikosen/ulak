@@ -68,6 +68,20 @@ public class CommandNeedingDepHandler(ExternalService externalService) : IComman
     }
 }
 
+public record UnregisteredQuery : IQuery<string>;
+
+public record UnregisteredCommandWithResponse : ICommand<string>;
+
+public record PingQuery(string Message) : IQuery<string>;
+
+public class PingQueryHandler : IQueryHandler<PingQuery, string>
+{
+    public Task<string> HandleAsync(PingQuery query, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(query.Message);
+    }
+}
+
 // Pipeline behavior test fixtures
 
 public record PingCommand(string Message) : ICommand<string>;

@@ -87,6 +87,25 @@ public class PipelineBehaviorTests
     }
 
     [Fact]
+    public async Task GlobalBehaviorAppliesOnQuery()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<ExecutionTracker>();
+        services.AddUlak(options =>
+        {
+            options.AddBehavior<OrderTrackingBehavior>();
+        });
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        var tracker = scope.ServiceProvider.GetRequiredService<ExecutionTracker>();
+
+        await sender.SendAsync(new PingQuery("test"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(["Before:PingQuery", "After:PingQuery"], tracker.Log);
+    }
+
+    [Fact]
     public async Task GlobalBehaviorAppliesOnVoidCommand()
     {
         var services = new ServiceCollection();
