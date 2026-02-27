@@ -1,5 +1,8 @@
 # Ulak
 
+[![NuGet](https://img.shields.io/nuget/v/Ulak.svg)](https://www.nuget.org/packages/Ulak)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/Ulak.svg)](https://www.nuget.org/packages/Ulak)
+
 Lightweight CQRS mediator library for .NET.
 
 ## Installation
@@ -8,12 +11,16 @@ Lightweight CQRS mediator library for .NET.
 dotnet add package Ulak
 ```
 
+Requires .NET 10+.
+
 ## Quick Start
 
 ### 1. Define commands and queries
 
 ```csharp
 public record CreateUser(string Name, string Email) : ICommand;
+
+public record CreateOrder(Guid UserId, decimal Amount) : ICommand<Guid>;
 
 public record GetUser(Guid Id) : IQuery<UserDto>;
 ```
@@ -26,6 +33,14 @@ public class CreateUserHandler : ICommandHandler<CreateUser>
     public async Task HandleAsync(CreateUser command, CancellationToken cancellationToken)
     {
         // create user...
+    }
+}
+
+public class CreateOrderHandler : ICommandHandler<CreateOrder, Guid>
+{
+    public async Task<Guid> HandleAsync(CreateOrder command, CancellationToken cancellationToken)
+    {
+        // create order, return id...
     }
 }
 
@@ -53,6 +68,12 @@ app.MapPost("/users", async (CreateUser command, ISender sender) =>
     return Results.Created();
 });
 
+app.MapPost("/orders", async (CreateOrder command, ISender sender) =>
+{
+    var orderId = await sender.SendAsync(command);
+    return Results.Created($"/orders/{orderId}", new { id = orderId });
+});
+
 app.MapGet("/users/{id}", async (Guid id, ISender sender) =>
 {
     var user = await sender.SendAsync(new GetUser(id));
@@ -61,6 +82,8 @@ app.MapGet("/users/{id}", async (Guid id, ISender sender) =>
 ```
 
 ### 5. Pipeline behaviors (optional)
+
+Behaviors run in registration order, wrapping the handler in a pipeline.
 
 ```csharp
 public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
@@ -78,7 +101,11 @@ public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
     }
 }
 
+// Open generic — applies to all requests
 builder.Services.AddUlakBehavior(typeof(LoggingBehavior<,>));
+
+// Concrete — applies to a specific request type
+builder.Services.AddUlakBehavior(typeof(UpperCaseBehavior));
 ```
 
 ## License
