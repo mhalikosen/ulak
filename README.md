@@ -56,8 +56,10 @@ public class GetUserHandler : IQueryHandler<GetUser, UserDto>
 ### 3. Register services
 
 ```csharp
-builder.Services.AddUlak(typeof(Program).Assembly);
+builder.Services.AddUlak();
 ```
+
+Handlers are discovered automatically from all loaded assemblies.
 
 ### 4. Send requests
 
@@ -86,13 +88,13 @@ app.MapGet("/users/{id}", async (Guid id, ISender sender) =>
 Behaviors run in registration order, wrapping the handler in a pipeline.
 
 ```csharp
-public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+public class LoggingBehavior : IPipelineBehavior
 {
-    public async Task<TResponse> HandleAsync(
+    public async Task<TResponse> HandleAsync<TRequest, TResponse>(
         TRequest request,
         NextStep<TResponse> next,
         CancellationToken cancellationToken)
+        where TRequest : IRequest<TResponse>
     {
         Console.WriteLine($"Handling {typeof(TRequest).Name}");
         var response = await next();
@@ -101,11 +103,11 @@ public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
     }
 }
 
-// Open generic — applies to all requests
-builder.Services.AddUlakBehavior(typeof(LoggingBehavior<,>));
-
-// Concrete — applies to a specific request type
-builder.Services.AddUlakBehavior(typeof(UpperCaseBehavior));
+builder.Services.AddUlak(options =>
+{
+    options.AddBehavior<LoggingBehavior>();
+    options.AddBehavior<ValidationBehavior>();
+});
 ```
 
 ## License
