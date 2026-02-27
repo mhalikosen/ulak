@@ -21,16 +21,16 @@ internal abstract class RequestHandlerBase<TResponse>
         if (behaviorArray.Length == 0)
             return handlerDelegate();
 
-        var next = handlerDelegate;
+        var nextHandler = handlerDelegate;
 
         for (var i = behaviorArray.Length - 1; i >= 0; i--)
         {
             var behavior = behaviorArray[i];
-            var current = next;
-            next = () => behavior.HandleAsync(request, current, cancellationToken);
+            var currentHandler = nextHandler;
+            nextHandler = () => behavior.HandleAsync(request, currentHandler, cancellationToken);
         }
 
-        return next();
+        return nextHandler();
     }
 }
 
@@ -78,13 +78,13 @@ internal sealed class VoidCommandHandlerWrapper<TCommand> : RequestHandlerBase<U
             if (task.IsCompletedSuccessfully)
                 return Unit.Task;
 
-            return AwaitAndReturnUnit(task);
+            return AwaitAndReturnUnitAsync(task);
         };
 
         return BuildPipeline((TCommand)request, behaviors, handlerDelegate, cancellationToken);
     }
 
-    private static async Task<Unit> AwaitAndReturnUnit(Task task)
+    private static async Task<Unit> AwaitAndReturnUnitAsync(Task task)
     {
         await task.ConfigureAwait(false);
         return Unit.Value;

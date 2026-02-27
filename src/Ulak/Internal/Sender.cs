@@ -33,7 +33,8 @@ internal sealed class Sender(IServiceProvider serviceProvider) : ISender
         if (responseType == typeof(Unit) && typeof(ICommand).IsAssignableFrom(requestType))
         {
             var wrapperType = typeof(VoidCommandHandlerWrapper<>).MakeGenericType(requestType);
-            return Activator.CreateInstance(wrapperType)!;
+            return Activator.CreateInstance(wrapperType)
+                ?? throw new InvalidOperationException($"Failed to create handler wrapper for type '{requestType.Name}'.");
         }
 
         // Check if it's a command with response
@@ -43,7 +44,8 @@ internal sealed class Sender(IServiceProvider serviceProvider) : ISender
         if (commandInterface is not null)
         {
             var wrapperType = typeof(CommandHandlerWrapper<,>).MakeGenericType(requestType, responseType);
-            return Activator.CreateInstance(wrapperType)!;
+            return Activator.CreateInstance(wrapperType)
+                ?? throw new InvalidOperationException($"Failed to create handler wrapper for type '{requestType.Name}'.");
         }
 
         // Check if it's a query
@@ -53,7 +55,8 @@ internal sealed class Sender(IServiceProvider serviceProvider) : ISender
         if (queryInterface is not null)
         {
             var wrapperType = typeof(QueryHandlerWrapper<,>).MakeGenericType(requestType, responseType);
-            return Activator.CreateInstance(wrapperType)!;
+            return Activator.CreateInstance(wrapperType)
+                ?? throw new InvalidOperationException($"Failed to create handler wrapper for type '{requestType.Name}'.");
         }
 
         throw new InvalidOperationException(

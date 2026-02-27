@@ -92,25 +92,25 @@ public class VoidPingHandler : ICommandHandler<VoidPingCommand>
 
 public class UpperCaseBehavior : IPipelineBehavior<PingCommand, string>
 {
-    public async Task<string> HandleAsync(PingCommand request, RequestHandlerDelegate<string> next, CancellationToken cancellationToken)
+    public async Task<string> HandleAsync(PingCommand request, RequestHandlerDelegate<string> nextHandler, CancellationToken cancellationToken)
     {
-        var result = await next();
+        var result = await nextHandler();
         return result.ToUpperInvariant();
     }
 }
 
 public class WrapBehavior : IPipelineBehavior<PingCommand, string>
 {
-    public async Task<string> HandleAsync(PingCommand request, RequestHandlerDelegate<string> next, CancellationToken cancellationToken)
+    public async Task<string> HandleAsync(PingCommand request, RequestHandlerDelegate<string> nextHandler, CancellationToken cancellationToken)
     {
-        var result = await next();
+        var result = await nextHandler();
         return $"[{result}]";
     }
 }
 
 public class ThrowingBehavior : IPipelineBehavior<PingCommand, string>
 {
-    public Task<string> HandleAsync(PingCommand request, RequestHandlerDelegate<string> next, CancellationToken cancellationToken)
+    public Task<string> HandleAsync(PingCommand request, RequestHandlerDelegate<string> nextHandler, CancellationToken cancellationToken)
     {
         throw new InvalidOperationException("Pipeline error");
     }
@@ -124,10 +124,10 @@ public class ExecutionTracker
 public class OrderTrackingBehavior<TRequest, TResponse>(ExecutionTracker tracker) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    public async Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> nextHandler, CancellationToken cancellationToken)
     {
         tracker.Log.Add($"Before:{typeof(TRequest).Name}");
-        var result = await next();
+        var result = await nextHandler();
         tracker.Log.Add($"After:{typeof(TRequest).Name}");
         return result;
     }

@@ -4,7 +4,7 @@ namespace Ulak.Tests;
 
 public class SenderTests
 {
-    private ServiceProvider CreateProvider()
+    private static ServiceProvider CreateProvider()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(SenderTests).Assembly);
@@ -19,7 +19,7 @@ public class SenderTests
         using var scope = provider.CreateScope();
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();
 
-        var result = await sender.SendAsync<Unit>(new CreateOrder("Widget", 5));
+        var result = await sender.SendAsync<Unit>(new CreateOrder("Widget", 5), TestContext.Current.CancellationToken);
 
         Assert.Equal(Unit.Value, result);
 
@@ -34,7 +34,7 @@ public class SenderTests
         using var scope = provider.CreateScope();
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();
 
-        var id = await sender.SendAsync(new CreateOrderWithId("Widget"));
+        var id = await sender.SendAsync(new CreateOrderWithId("Widget"), TestContext.Current.CancellationToken);
 
         Assert.NotEqual(Guid.Empty, id);
 
@@ -49,7 +49,7 @@ public class SenderTests
         var sender = provider.GetRequiredService<ISender>();
         var orderId = Guid.NewGuid();
 
-        var result = await sender.SendAsync(new GetOrder(orderId));
+        var result = await sender.SendAsync(new GetOrder(orderId), TestContext.Current.CancellationToken);
 
         Assert.Equal(orderId, result.Id);
         Assert.Equal("Test Product", result.Product);
@@ -62,7 +62,7 @@ public class SenderTests
         var sender = provider.GetRequiredService<ISender>();
 
         await Assert.ThrowsAsync<ArgumentNullException>(()
-            => sender.SendAsync<Unit>(null!));
+            => sender.SendAsync<Unit>(null!, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class SenderTests
         using var provider = CreateProvider();
         var sender = provider.GetRequiredService<ISender>();
 
-        var result = await sender.SendAsync(new CommandNeedingDep("test"));
+        var result = await sender.SendAsync(new CommandNeedingDep("test"), TestContext.Current.CancellationToken);
 
         Assert.Equal("processed:test", result);
     }
@@ -95,7 +95,7 @@ public class SenderTests
         var sender = provider.GetRequiredService<ISender>();
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(()
-            => sender.SendAsync(new UnregisteredCommand()));
+            => sender.SendAsync(new UnregisteredCommand(), TestContext.Current.CancellationToken));
 
         Assert.Contains("No handler registered for command", exception.Message);
         Assert.Contains("UnregisteredCommand", exception.Message);
@@ -108,7 +108,7 @@ public class SenderTests
         using var scope = provider.CreateScope();
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();
 
-        await sender.SendAsync(new CreateOrder("Widget", 5));
+        await sender.SendAsync(new CreateOrder("Widget", 5), TestContext.Current.CancellationToken);
 
         var handler = scope.ServiceProvider.GetRequiredService<ICommandHandler<CreateOrder>>();
         Assert.True(((CreateOrderHandler)handler).WasHandled);
@@ -121,6 +121,6 @@ public class SenderTests
         var sender = provider.GetRequiredService<ISender>();
 
         await Assert.ThrowsAsync<ArgumentNullException>(()
-            => sender.SendAsync((ICommand)null!));
+            => sender.SendAsync((ICommand)null!, TestContext.Current.CancellationToken));
     }
 }

@@ -13,7 +13,7 @@ public class PipelineBehaviorTests
         using var provider = services.BuildServiceProvider();
         var sender = provider.GetRequiredService<ISender>();
 
-        var result = await sender.SendAsync(new PingCommand("hello"));
+        var result = await sender.SendAsync(new PingCommand("hello"), TestContext.Current.CancellationToken);
 
         Assert.Equal("HELLO", result);
     }
@@ -23,15 +23,12 @@ public class PipelineBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
-        // First registered = outermost: Wrap runs first, then UpperCase
         services.AddScoped<IPipelineBehavior<PingCommand, string>, WrapBehavior>();
         services.AddScoped<IPipelineBehavior<PingCommand, string>, UpperCaseBehavior>();
         using var provider = services.BuildServiceProvider();
         var sender = provider.GetRequiredService<ISender>();
 
-        // UpperCase wraps handler: "hello" -> "HELLO"
-        // Wrap wraps UpperCase: "HELLO" -> "[HELLO]"
-        var result = await sender.SendAsync(new PingCommand("hello"));
+        var result = await sender.SendAsync(new PingCommand("hello"), TestContext.Current.CancellationToken);
 
         Assert.Equal("[HELLO]", result);
     }
@@ -46,7 +43,7 @@ public class PipelineBehaviorTests
         var sender = provider.GetRequiredService<ISender>();
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(()
-            => sender.SendAsync(new PingCommand("hello")));
+            => sender.SendAsync(new PingCommand("hello"), TestContext.Current.CancellationToken));
 
         Assert.Equal("Pipeline error", exception.Message);
     }
@@ -63,7 +60,7 @@ public class PipelineBehaviorTests
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();
         var tracker = scope.ServiceProvider.GetRequiredService<ExecutionTracker>();
 
-        await sender.SendAsync(new PingCommand("test"));
+        await sender.SendAsync(new PingCommand("test"), TestContext.Current.CancellationToken);
 
         Assert.Equal(["Before:PingCommand", "After:PingCommand"], tracker.Log);
     }
@@ -73,11 +70,10 @@ public class PipelineBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
-        // No behaviors registered
         using var provider = services.BuildServiceProvider();
         var sender = provider.GetRequiredService<ISender>();
 
-        var result = await sender.SendAsync(new PingCommand("direct"));
+        var result = await sender.SendAsync(new PingCommand("direct"), TestContext.Current.CancellationToken);
 
         Assert.Equal("direct", result);
     }
@@ -94,7 +90,7 @@ public class PipelineBehaviorTests
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();
         var tracker = scope.ServiceProvider.GetRequiredService<ExecutionTracker>();
 
-        await sender.SendAsync(new VoidPingCommand("test"));
+        await sender.SendAsync(new VoidPingCommand("test"), TestContext.Current.CancellationToken);
 
         Assert.Equal(["Before:VoidPingCommand", "After:VoidPingCommand"], tracker.Log);
     }
