@@ -5,7 +5,7 @@ namespace Ulak.Tests;
 public class PipelineBehaviorTests
 {
     [Fact]
-    public async Task SingleBehavior_TransformsResponse()
+    public async Task SingleBehaviorTransformsResponse()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
@@ -19,7 +19,7 @@ public class PipelineBehaviorTests
     }
 
     [Fact]
-    public async Task MultipleBehaviors_ExecuteInRegistrationOrder()
+    public async Task MultipleBehaviorsExecuteInRegistrationOrder()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
@@ -34,7 +34,7 @@ public class PipelineBehaviorTests
     }
 
     [Fact]
-    public async Task Behavior_ThrowsException_PropagatesUp()
+    public async Task BehaviorThrowsExceptionPropagatesUp()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
@@ -49,7 +49,7 @@ public class PipelineBehaviorTests
     }
 
     [Fact]
-    public async Task OpenGenericBehavior_AppliesAcrossRequestTypes()
+    public async Task OpenGenericBehaviorAppliesAcrossRequestTypes()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
@@ -66,7 +66,7 @@ public class PipelineBehaviorTests
     }
 
     [Fact]
-    public async Task NoBehaviors_HandlerExecutesDirectly()
+    public async Task NoBehaviorsHandlerExecutesDirectly()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
@@ -79,7 +79,7 @@ public class PipelineBehaviorTests
     }
 
     [Fact]
-    public async Task OpenGenericBehavior_AppliesOnVoidCommand()
+    public async Task OpenGenericBehaviorAppliesOnVoidCommand()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(PipelineBehaviorTests).Assembly);

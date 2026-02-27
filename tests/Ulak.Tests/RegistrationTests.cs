@@ -5,7 +5,7 @@ namespace Ulak.Tests;
 public class RegistrationTests
 {
     [Fact]
-    public void AddUlak_RegistersISender()
+    public void AddUlakRegistersISender()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(RegistrationTests).Assembly);
@@ -17,7 +17,7 @@ public class RegistrationTests
     }
 
     [Fact]
-    public void AddUlak_RegistersVoidCommandHandler()
+    public void AddUlakRegistersVoidCommandHandler()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(RegistrationTests).Assembly);
@@ -30,7 +30,7 @@ public class RegistrationTests
     }
 
     [Fact]
-    public void AddUlak_RegistersCommandHandlerWithResponse()
+    public void AddUlakRegistersCommandHandlerWithResponse()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(RegistrationTests).Assembly);
@@ -43,7 +43,7 @@ public class RegistrationTests
     }
 
     [Fact]
-    public void AddUlak_RegistersQueryHandler()
+    public void AddUlakRegistersQueryHandler()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(RegistrationTests).Assembly);
@@ -56,7 +56,7 @@ public class RegistrationTests
     }
 
     [Fact]
-    public void AddUlakBehavior_RegistersOpenGenericBehavior()
+    public void AddUlakBehaviorRegistersOpenGenericBehavior()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(RegistrationTests).Assembly);
@@ -70,7 +70,7 @@ public class RegistrationTests
     }
 
     [Fact]
-    public void AddUlak_SingleAssembly_RegistersSuccessfully()
+    public void AddUlakRegistersSuccessfullyForSingleAssembly()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(RegistrationTests).Assembly);
@@ -83,7 +83,7 @@ public class RegistrationTests
     }
 
     [Fact]
-    public void AddUlak_DuplicateRegistration_FirstHandlerWins()
+    public void AddUlakFirstHandlerWinsForDuplicateRegistration()
     {
         var services = new ServiceCollection();
         // Register same assembly twice — TryAddScoped should prevent duplicates
@@ -96,7 +96,7 @@ public class RegistrationTests
     }
 
     [Fact]
-    public void AddUlak_NullAssemblies_ThrowsArgumentNullException()
+    public void AddUlakThrowsArgumentNullExceptionForNullAssemblies()
     {
         var services = new ServiceCollection();
 
@@ -105,7 +105,7 @@ public class RegistrationTests
     }
 
     [Fact]
-    public void AddUlak_EmptyAssemblies_ThrowsArgumentOutOfRangeException()
+    public void AddUlakThrowsArgumentOutOfRangeExceptionForEmptyAssemblies()
     {
         var services = new ServiceCollection();
 
@@ -114,7 +114,7 @@ public class RegistrationTests
     }
 
     [Fact]
-    public void AddUlakBehavior_NullType_ThrowsArgumentNullException()
+    public void AddUlakBehaviorThrowsArgumentNullExceptionForNullType()
     {
         var services = new ServiceCollection();
 
@@ -123,7 +123,7 @@ public class RegistrationTests
     }
 
     [Fact]
-    public void AddUlakBehavior_InvalidType_ThrowsArgumentException()
+    public void AddUlakBehaviorThrowsArgumentExceptionForInvalidType()
     {
         var services = new ServiceCollection();
 
@@ -132,7 +132,7 @@ public class RegistrationTests
     }
 
     [Fact]
-    public void AddUlakBehavior_InvalidOpenGenericType_ThrowsArgumentException()
+    public void AddUlakBehaviorThrowsArgumentExceptionForInvalidOpenGenericType()
     {
         var services = new ServiceCollection();
 

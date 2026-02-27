@@ -10,8 +10,6 @@ public readonly struct Unit : IEquatable<Unit>
     public override int GetHashCode() => 0;
     public override string ToString() => "()";
 
-#pragma warning disable IDE0060 // Remove unused parameter - required by operator signature
-    public static bool operator ==(Unit left, Unit right) => true;
-    public static bool operator !=(Unit left, Unit right) => false;
-#pragma warning restore IDE0060
+    public static bool operator ==(Unit left, Unit right) => left.Equals(right);
+    public static bool operator !=(Unit left, Unit right) => !left.Equals(right);
 }

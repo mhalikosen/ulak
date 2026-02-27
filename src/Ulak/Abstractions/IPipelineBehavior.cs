@@ -1,10 +1,8 @@
 namespace Ulak;
 
-#pragma warning disable CA1711 // Identifiers should not have incorrect suffix
-public delegate Task<TResponse> RequestHandlerDelegate<TResponse>();
-#pragma warning restore CA1711
+public delegate Task<TResponse> PipelineStep<TResponse>();
 
 public interface IPipelineBehavior<in TRequest, TResponse> where TRequest : IRequest<TResponse>
 {
-    public Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> nextHandler, CancellationToken cancellationToken);
+    public Task<TResponse> HandleAsync(TRequest request, PipelineStep<TResponse> nextHandler, CancellationToken cancellationToken);
 }

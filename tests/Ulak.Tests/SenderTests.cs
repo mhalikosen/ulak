@@ -13,7 +13,7 @@ public class SenderTests
     }
 
     [Fact]
-    public async Task SendAsync_VoidCommand_ExecutesHandler()
+    public async Task SendAsyncExecutesHandlerForVoidCommand()
     {
         using var provider = CreateProvider();
         using var scope = provider.CreateScope();
@@ -28,7 +28,7 @@ public class SenderTests
     }
 
     [Fact]
-    public async Task SendAsync_CommandWithResponse_ReturnsResponse()
+    public async Task SendAsyncReturnsResponseForCommandWithResponse()
     {
         using var provider = CreateProvider();
         using var scope = provider.CreateScope();
@@ -43,7 +43,7 @@ public class SenderTests
     }
 
     [Fact]
-    public async Task SendAsync_Query_ReturnsResponse()
+    public async Task SendAsyncReturnsResponseForQuery()
     {
         using var provider = CreateProvider();
         var sender = provider.GetRequiredService<ISender>();
@@ -56,7 +56,7 @@ public class SenderTests
     }
 
     [Fact]
-    public async Task SendAsync_NullRequest_ThrowsArgumentNullException()
+    public async Task SendAsyncThrowsArgumentNullExceptionForNullRequest()
     {
         using var provider = CreateProvider();
         var sender = provider.GetRequiredService<ISender>();
@@ -66,7 +66,7 @@ public class SenderTests
     }
 
     [Fact]
-    public async Task SendAsync_CancelledToken_ThrowsOperationCancelledException()
+    public async Task SendAsyncThrowsOperationCancelledExceptionForCancelledToken()
     {
         using var provider = CreateProvider();
         var sender = provider.GetRequiredService<ISender>();
@@ -78,7 +78,7 @@ public class SenderTests
     }
 
     [Fact]
-    public async Task SendAsync_HandlerWithDependency_ResolvesDependency()
+    public async Task SendAsyncResolvesDependencyForHandlerWithDependency()
     {
         using var provider = CreateProvider();
         var sender = provider.GetRequiredService<ISender>();
@@ -89,7 +89,7 @@ public class SenderTests
     }
 
     [Fact]
-    public async Task SendAsync_MissingHandler_ThrowsDescriptiveError()
+    public async Task SendAsyncThrowsDescriptiveErrorForMissingHandler()
     {
         using var provider = CreateProvider();
         var sender = provider.GetRequiredService<ISender>();
@@ -102,7 +102,7 @@ public class SenderTests
     }
 
     [Fact]
-    public async Task SendAsync_NonGenericVoidCommand_ExecutesHandler()
+    public async Task SendAsyncExecutesHandlerForNonGenericVoidCommand()
     {
         using var provider = CreateProvider();
         using var scope = provider.CreateScope();
@@ -115,7 +115,7 @@ public class SenderTests
     }
 
     [Fact]
-    public async Task SendAsync_NonGenericNullCommand_ThrowsArgumentNullException()
+    public async Task SendAsyncThrowsArgumentNullExceptionForNonGenericNullCommand()
     {
         using var provider = CreateProvider();
         var sender = provider.GetRequiredService<ISender>();
