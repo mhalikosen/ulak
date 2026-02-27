@@ -12,7 +12,7 @@ internal abstract class RequestHandlerBase<TResponse>
     protected static Task<TResponse> BuildPipeline<TRequest>(
         TRequest request,
         IEnumerable<IPipelineBehavior<TRequest, TResponse>> behaviors,
-        PipelineStep<TResponse> handlerDelegate,
+        NextStep<TResponse> handlerDelegate,
         CancellationToken cancellationToken)
         where TRequest : IRequest<TResponse>
     {
@@ -49,7 +49,7 @@ internal sealed class CommandHandlerWrapper<TCommand, TResponse> : RequestHandle
 
         var behaviors = serviceProvider.GetServices<IPipelineBehavior<TCommand, TResponse>>();
 
-        PipelineStep<TResponse> handlerDelegate = ()
+        NextStep<TResponse> handlerDelegate = ()
             => handler.HandleAsync((TCommand)request, cancellationToken);
 
         return BuildPipeline((TCommand)request, behaviors, handlerDelegate, cancellationToken);
@@ -71,7 +71,7 @@ internal sealed class VoidCommandHandlerWrapper<TCommand> : RequestHandlerBase<U
 
         var behaviors = serviceProvider.GetServices<IPipelineBehavior<TCommand, Unit>>();
 
-        PipelineStep<Unit> handlerDelegate = () =>
+        NextStep<Unit> handlerDelegate = () =>
         {
             var task = handler.HandleAsync((TCommand)request, cancellationToken);
 
@@ -106,7 +106,7 @@ internal sealed class QueryHandlerWrapper<TQuery, TResponse> : RequestHandlerBas
 
         var behaviors = serviceProvider.GetServices<IPipelineBehavior<TQuery, TResponse>>();
 
-        PipelineStep<TResponse> handlerDelegate = ()
+        NextStep<TResponse> handlerDelegate = ()
             => handler.HandleAsync((TQuery)request, cancellationToken);
 
         return BuildPipeline((TQuery)request, behaviors, handlerDelegate, cancellationToken);

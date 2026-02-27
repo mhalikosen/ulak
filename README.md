@@ -68,7 +68,7 @@ public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
 {
     public async Task<TResponse> HandleAsync(
         TRequest request,
-        PipelineStep<TResponse> next,
+        NextStep<TResponse> next,
         CancellationToken cancellationToken)
     {
         Console.WriteLine($"Handling {typeof(TRequest).Name}");
