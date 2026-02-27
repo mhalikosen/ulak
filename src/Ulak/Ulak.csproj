@@ -3,7 +3,7 @@
     <PropertyGroup>
         <RootNamespace>Ulak</RootNamespace>
         <PackageId>Ulak</PackageId>
-        <Version>2.0.1</Version>
+        <Version>2.0.2</Version>
         <Authors>mhalikosen</Authors>
         <Description>Lightweight CQRS mediator library for .NET</Description>
         <PackageProjectUrl>https://github.com/mhalikosen/ulak</PackageProjectUrl>
