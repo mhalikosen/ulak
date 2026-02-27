@@ -16,7 +16,7 @@ internal abstract class RequestHandlerBase<TResponse>
         CancellationToken cancellationToken)
         where TRequest : IRequest<TResponse>
     {
-        var behaviorArray = behaviors.ToArray();
+        var behaviorArray = behaviors as IPipelineBehavior[] ?? behaviors.ToArray();
 
         if (behaviorArray.Length == 0)
             return handlerDelegate();

@@ -39,7 +39,14 @@ public static class ServiceCollectionExtensions
 
         foreach (var behaviorType in options.BehaviorTypes)
         {
-            services.AddScoped(typeof(IPipelineBehavior), behaviorType);
+            var alreadyRegistered = services.Any(descriptor =>
+                descriptor.ServiceType == typeof(IPipelineBehavior) &&
+                descriptor.ImplementationType == behaviorType);
+
+            if (!alreadyRegistered)
+            {
+                services.AddScoped(typeof(IPipelineBehavior), behaviorType);
+            }
         }
 
         return services;
