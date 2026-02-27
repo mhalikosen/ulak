@@ -9,7 +9,7 @@ public class RegistrationTests
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(RegistrationTests).Assembly);
-        var provider = services.BuildServiceProvider();
+        using var provider = services.BuildServiceProvider();
 
         var sender = provider.GetService<ISender>();
 
@@ -21,7 +21,7 @@ public class RegistrationTests
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(RegistrationTests).Assembly);
-        var provider = services.BuildServiceProvider();
+        using var provider = services.BuildServiceProvider();
 
         var handler = provider.GetService<ICommandHandler<CreateOrder>>();
 
@@ -34,7 +34,7 @@ public class RegistrationTests
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(RegistrationTests).Assembly);
-        var provider = services.BuildServiceProvider();
+        using var provider = services.BuildServiceProvider();
 
         var handler = provider.GetService<ICommandHandler<CreateOrderWithId, Guid>>();
 
@@ -47,7 +47,7 @@ public class RegistrationTests
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(RegistrationTests).Assembly);
-        var provider = services.BuildServiceProvider();
+        using var provider = services.BuildServiceProvider();
 
         var handler = provider.GetService<IQueryHandler<GetOrder, OrderDto>>();
 
@@ -62,7 +62,7 @@ public class RegistrationTests
         services.AddUlak(typeof(RegistrationTests).Assembly);
         services.AddUlakBehavior(typeof(OrderTrackingBehavior<,>));
         services.AddScoped<ExecutionTracker>();
-        var provider = services.BuildServiceProvider();
+        using var provider = services.BuildServiceProvider();
 
         var behaviors = provider.GetServices<IPipelineBehavior<PingCommand, string>>();
 
@@ -70,13 +70,13 @@ public class RegistrationTests
     }
 
     [Fact]
-    public void AddUlak_MultipleAssemblies_RegistersAll()
+    public void AddUlak_SingleAssembly_RegistersSuccessfully()
     {
         var services = new ServiceCollection();
         services.AddUlak(typeof(RegistrationTests).Assembly);
 
         // Should not throw, even when same assembly scanned twice
-        var provider = services.BuildServiceProvider();
+        using var provider = services.BuildServiceProvider();
         var sender = provider.GetService<ISender>();
 
         Assert.NotNull(sender);
@@ -88,7 +88,7 @@ public class RegistrationTests
         var services = new ServiceCollection();
         // Register same assembly twice — TryAddScoped should prevent duplicates
         services.AddUlak(typeof(RegistrationTests).Assembly, typeof(RegistrationTests).Assembly);
-        var provider = services.BuildServiceProvider();
+        using var provider = services.BuildServiceProvider();
 
         var handlers = provider.GetServices<ICommandHandler<CreateOrder>>();
 

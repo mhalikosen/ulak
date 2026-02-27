@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Reflection;
 
 namespace Ulak.Internal;
 
@@ -22,7 +21,7 @@ internal sealed class Sender(IServiceProvider serviceProvider) : ISender
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        await SendAsync<Unit>(command, cancellationToken);
+        await SendAsync<Unit>(command, cancellationToken).ConfigureAwait(false);
     }
 
     private static object CreateWrapper<TResponse>(Type requestType)
@@ -34,7 +33,7 @@ internal sealed class Sender(IServiceProvider serviceProvider) : ISender
         if (responseType == typeof(Unit) && typeof(ICommand).IsAssignableFrom(requestType))
         {
             var wrapperType = typeof(VoidCommandHandlerWrapper<>).MakeGenericType(requestType);
-            return CreateWrapperInstance(wrapperType, requestType);
+            return Activator.CreateInstance(wrapperType)!;
         }
 
         // Check if it's a command with response
@@ -44,7 +43,7 @@ internal sealed class Sender(IServiceProvider serviceProvider) : ISender
         if (commandInterface is not null)
         {
             var wrapperType = typeof(CommandHandlerWrapper<,>).MakeGenericType(requestType, responseType);
-            return CreateWrapperInstance(wrapperType, requestType);
+            return Activator.CreateInstance(wrapperType)!;
         }
 
         // Check if it's a query
@@ -54,24 +53,11 @@ internal sealed class Sender(IServiceProvider serviceProvider) : ISender
         if (queryInterface is not null)
         {
             var wrapperType = typeof(QueryHandlerWrapper<,>).MakeGenericType(requestType, responseType);
-            return CreateWrapperInstance(wrapperType, requestType);
+            return Activator.CreateInstance(wrapperType)!;
         }
 
         throw new InvalidOperationException(
             $"No handler wrapper could be created for request type {requestType.Name}. " +
             $"Ensure it implements ICommand, ICommand<TResponse>, or IQuery<TResponse>.");
-    }
-
-    private static object CreateWrapperInstance(Type wrapperType, Type requestType)
-    {
-        var constructor = wrapperType.GetConstructor(Type.EmptyTypes);
-
-        if (constructor is null)
-        {
-            throw new InvalidOperationException(
-                $"Handler wrapper type '{wrapperType.Name}' for request '{requestType.Name}' does not have a parameterless constructor.");
-        }
-
-        return constructor.Invoke(null);
     }
 }

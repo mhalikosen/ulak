@@ -86,7 +86,7 @@ internal sealed class VoidCommandHandlerWrapper<TCommand> : RequestHandlerBase<U
 
     private static async Task<Unit> AwaitAndReturnUnit(Task task)
     {
-        await task;
+        await task.ConfigureAwait(false);
         return Unit.Value;
     }
 }

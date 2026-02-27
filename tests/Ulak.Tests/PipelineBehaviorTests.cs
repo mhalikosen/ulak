@@ -2,69 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ulak.Tests;
 
-public record PingCommand(string Message) : ICommand<string>;
-
-public record VoidPingCommand(string Message) : ICommand;
-
-public class PingHandler : ICommandHandler<PingCommand, string>
-{
-    public Task<string> HandleAsync(PingCommand command, CancellationToken cancellationToken)
-    {
-        return Task.FromResult(command.Message);
-    }
-}
-
-public class VoidPingHandler : ICommandHandler<VoidPingCommand>
-{
-    public Task HandleAsync(VoidPingCommand command, CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
-    }
-}
-
-public class UpperCaseBehavior : IPipelineBehavior<PingCommand, string>
-{
-    public async Task<string> HandleAsync(PingCommand request, RequestHandlerDelegate<string> next, CancellationToken cancellationToken)
-    {
-        var result = await next();
-        return result.ToUpperInvariant();
-    }
-}
-
-public class WrapBehavior : IPipelineBehavior<PingCommand, string>
-{
-    public async Task<string> HandleAsync(PingCommand request, RequestHandlerDelegate<string> next, CancellationToken cancellationToken)
-    {
-        var result = await next();
-        return $"[{result}]";
-    }
-}
-
-public class ThrowingBehavior : IPipelineBehavior<PingCommand, string>
-{
-    public Task<string> HandleAsync(PingCommand request, RequestHandlerDelegate<string> next, CancellationToken cancellationToken)
-    {
-        throw new InvalidOperationException("Pipeline error");
-    }
-}
-
-public class ExecutionTracker
-{
-    public List<string> Log { get; } = [];
-}
-
-public class OrderTrackingBehavior<TRequest, TResponse>(ExecutionTracker tracker) : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
-{
-    public async Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
-    {
-        tracker.Log.Add($"Before:{typeof(TRequest).Name}");
-        var result = await next();
-        tracker.Log.Add($"After:{typeof(TRequest).Name}");
-        return result;
-    }
-}
-
 public class PipelineBehaviorTests
 {
     [Fact]
@@ -73,7 +10,8 @@ public class PipelineBehaviorTests
         var services = new ServiceCollection();
         services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
         services.AddUlakBehavior(typeof(UpperCaseBehavior));
-        var sender = services.BuildServiceProvider().GetRequiredService<ISender>();
+        using var provider = services.BuildServiceProvider();
+        var sender = provider.GetRequiredService<ISender>();
 
         var result = await sender.SendAsync(new PingCommand("hello"));
 
@@ -88,7 +26,8 @@ public class PipelineBehaviorTests
         // First registered = outermost: Wrap runs first, then UpperCase
         services.AddScoped<IPipelineBehavior<PingCommand, string>, WrapBehavior>();
         services.AddScoped<IPipelineBehavior<PingCommand, string>, UpperCaseBehavior>();
-        var sender = services.BuildServiceProvider().GetRequiredService<ISender>();
+        using var provider = services.BuildServiceProvider();
+        var sender = provider.GetRequiredService<ISender>();
 
         // UpperCase wraps handler: "hello" -> "HELLO"
         // Wrap wraps UpperCase: "HELLO" -> "[HELLO]"
@@ -103,7 +42,8 @@ public class PipelineBehaviorTests
         var services = new ServiceCollection();
         services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
         services.AddScoped<IPipelineBehavior<PingCommand, string>, ThrowingBehavior>();
-        var sender = services.BuildServiceProvider().GetRequiredService<ISender>();
+        using var provider = services.BuildServiceProvider();
+        var sender = provider.GetRequiredService<ISender>();
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(()
             => sender.SendAsync(new PingCommand("hello")));
@@ -134,7 +74,8 @@ public class PipelineBehaviorTests
         var services = new ServiceCollection();
         services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
         // No behaviors registered
-        var sender = services.BuildServiceProvider().GetRequiredService<ISender>();
+        using var provider = services.BuildServiceProvider();
+        var sender = provider.GetRequiredService<ISender>();
 
         var result = await sender.SendAsync(new PingCommand("direct"));
 

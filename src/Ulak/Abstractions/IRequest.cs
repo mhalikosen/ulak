@@ -1,6 +1,4 @@
 namespace Ulak;
 
-public interface IRequest<out TResponse>
-{
-    internal Type RequestType => GetType();
-}
+public interface IRequest<out TResponse>;
+
