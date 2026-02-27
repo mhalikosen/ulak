@@ -7,7 +7,7 @@
         <RootNamespace>Ulak</RootNamespace>
 
         <PackageId>Ulak</PackageId>
-        <Version>0.1.0</Version>
+        <Version>1.0.0</Version>
         <Authors>mhalikosen</Authors>
         <Description>Lightweight CQRS mediator library for .NET</Description>
         <PackageProjectUrl>https://github.com/mhalikosen/ulak</PackageProjectUrl>
