@@ -11,7 +11,7 @@ internal abstract class RequestHandlerBase<TResponse>
 
     protected static Task<TResponse> BuildPipeline<TRequest>(
         TRequest request,
-        IEnumerable<IPipelineBehavior<TRequest, TResponse>> behaviors,
+        IEnumerable<IPipelineBehavior> behaviors,
         NextStep<TResponse> handlerDelegate,
         CancellationToken cancellationToken)
         where TRequest : IRequest<TResponse>
@@ -27,7 +27,7 @@ internal abstract class RequestHandlerBase<TResponse>
         {
             var behavior = behaviorArray[i];
             var currentHandler = nextHandler;
-            nextHandler = () => behavior.HandleAsync(request, currentHandler, cancellationToken);
+            nextHandler = () => behavior.HandleAsync<TRequest, TResponse>(request, currentHandler, cancellationToken);
         }
 
         return nextHandler();
@@ -47,7 +47,7 @@ internal sealed class CommandHandlerWrapper<TCommand, TResponse> : RequestHandle
                 $"No handler registered for command '{typeof(TCommand).Name}'. " +
                 $"Register an ICommandHandler<{typeof(TCommand).Name}, {typeof(TResponse).Name}> implementation.");
 
-        var behaviors = serviceProvider.GetServices<IPipelineBehavior<TCommand, TResponse>>();
+        var behaviors = serviceProvider.GetServices<IPipelineBehavior>();
 
         NextStep<TResponse> handlerDelegate = ()
             => handler.HandleAsync((TCommand)request, cancellationToken);
@@ -69,7 +69,7 @@ internal sealed class VoidCommandHandlerWrapper<TCommand> : RequestHandlerBase<U
                 $"No handler registered for command '{typeof(TCommand).Name}'. " +
                 $"Register an ICommandHandler<{typeof(TCommand).Name}> implementation.");
 
-        var behaviors = serviceProvider.GetServices<IPipelineBehavior<TCommand, Unit>>();
+        var behaviors = serviceProvider.GetServices<IPipelineBehavior>();
 
         NextStep<Unit> handlerDelegate = () =>
         {
@@ -104,7 +104,7 @@ internal sealed class QueryHandlerWrapper<TQuery, TResponse> : RequestHandlerBas
                 $"No handler registered for query '{typeof(TQuery).Name}'. " +
                 $"Register an IQueryHandler<{typeof(TQuery).Name}, {typeof(TResponse).Name}> implementation.");
 
-        var behaviors = serviceProvider.GetServices<IPipelineBehavior<TQuery, TResponse>>();
+        var behaviors = serviceProvider.GetServices<IPipelineBehavior>();
 
         NextStep<TResponse> handlerDelegate = ()
             => handler.HandleAsync((TQuery)request, cancellationToken);

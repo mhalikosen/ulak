@@ -7,7 +7,7 @@ public class SenderTests
     private static ServiceProvider CreateProvider()
     {
         var services = new ServiceCollection();
-        services.AddUlak(typeof(SenderTests).Assembly);
+        services.AddUlak();
         services.AddScoped<ExternalService>();
         return services.BuildServiceProvider();
     }

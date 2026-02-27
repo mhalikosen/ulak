@@ -8,8 +8,10 @@ public class PipelineBehaviorTests
     public async Task SingleBehaviorTransformsResponse()
     {
         var services = new ServiceCollection();
-        services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
-        services.AddUlakBehavior(typeof(UpperCaseBehavior));
+        services.AddUlak(options =>
+        {
+            options.AddBehavior<UpperCaseBehavior>();
+        });
         using var provider = services.BuildServiceProvider();
         var sender = provider.GetRequiredService<ISender>();
 
@@ -22,9 +24,11 @@ public class PipelineBehaviorTests
     public async Task MultipleBehaviorsExecuteInRegistrationOrder()
     {
         var services = new ServiceCollection();
-        services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
-        services.AddScoped<IPipelineBehavior<PingCommand, string>, WrapBehavior>();
-        services.AddScoped<IPipelineBehavior<PingCommand, string>, UpperCaseBehavior>();
+        services.AddUlak(options =>
+        {
+            options.AddBehavior<WrapBehavior>();
+            options.AddBehavior<UpperCaseBehavior>();
+        });
         using var provider = services.BuildServiceProvider();
         var sender = provider.GetRequiredService<ISender>();
 
@@ -37,8 +41,10 @@ public class PipelineBehaviorTests
     public async Task BehaviorThrowsExceptionPropagatesUp()
     {
         var services = new ServiceCollection();
-        services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
-        services.AddScoped<IPipelineBehavior<PingCommand, string>, ThrowingBehavior>();
+        services.AddUlak(options =>
+        {
+            options.AddBehavior<ThrowingBehavior>();
+        });
         using var provider = services.BuildServiceProvider();
         var sender = provider.GetRequiredService<ISender>();
 
@@ -49,12 +55,14 @@ public class PipelineBehaviorTests
     }
 
     [Fact]
-    public async Task OpenGenericBehaviorAppliesAcrossRequestTypes()
+    public async Task GlobalBehaviorAppliesAcrossRequestTypes()
     {
         var services = new ServiceCollection();
-        services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
         services.AddScoped<ExecutionTracker>();
-        services.AddUlakBehavior(typeof(OrderTrackingBehavior<,>));
+        services.AddUlak(options =>
+        {
+            options.AddBehavior<OrderTrackingBehavior>();
+        });
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();
@@ -69,7 +77,7 @@ public class PipelineBehaviorTests
     public async Task NoBehaviorsHandlerExecutesDirectly()
     {
         var services = new ServiceCollection();
-        services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
+        services.AddUlak();
         using var provider = services.BuildServiceProvider();
         var sender = provider.GetRequiredService<ISender>();
 
@@ -79,12 +87,14 @@ public class PipelineBehaviorTests
     }
 
     [Fact]
-    public async Task OpenGenericBehaviorAppliesOnVoidCommand()
+    public async Task GlobalBehaviorAppliesOnVoidCommand()
     {
         var services = new ServiceCollection();
-        services.AddUlak(typeof(PipelineBehaviorTests).Assembly);
         services.AddScoped<ExecutionTracker>();
-        services.AddUlakBehavior(typeof(OrderTrackingBehavior<,>));
+        services.AddUlak(options =>
+        {
+            options.AddBehavior<OrderTrackingBehavior>();
+        });
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();

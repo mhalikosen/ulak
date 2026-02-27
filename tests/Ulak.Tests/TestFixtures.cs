@@ -90,27 +90,34 @@ public class VoidPingHandler : ICommandHandler<VoidPingCommand>
     }
 }
 
-public class UpperCaseBehavior : IPipelineBehavior<PingCommand, string>
+public class UpperCaseBehavior : IPipelineBehavior
 {
-    public async Task<string> HandleAsync(PingCommand request, NextStep<string> nextHandler, CancellationToken cancellationToken)
+    public async Task<TResponse> HandleAsync<TRequest, TResponse>(TRequest request, NextStep<TResponse> nextHandler, CancellationToken cancellationToken)
+        where TRequest : IRequest<TResponse>
     {
         var result = await nextHandler();
-        return result.ToUpperInvariant();
+        if (result is string stringResult)
+            return (TResponse)(object)stringResult.ToUpperInvariant();
+        return result;
     }
 }
 
-public class WrapBehavior : IPipelineBehavior<PingCommand, string>
+public class WrapBehavior : IPipelineBehavior
 {
-    public async Task<string> HandleAsync(PingCommand request, NextStep<string> nextHandler, CancellationToken cancellationToken)
+    public async Task<TResponse> HandleAsync<TRequest, TResponse>(TRequest request, NextStep<TResponse> nextHandler, CancellationToken cancellationToken)
+        where TRequest : IRequest<TResponse>
     {
         var result = await nextHandler();
-        return $"[{result}]";
+        if (result is string stringResult)
+            return (TResponse)(object)$"[{stringResult}]";
+        return result;
     }
 }
 
-public class ThrowingBehavior : IPipelineBehavior<PingCommand, string>
+public class ThrowingBehavior : IPipelineBehavior
 {
-    public Task<string> HandleAsync(PingCommand request, NextStep<string> nextHandler, CancellationToken cancellationToken)
+    public Task<TResponse> HandleAsync<TRequest, TResponse>(TRequest request, NextStep<TResponse> nextHandler, CancellationToken cancellationToken)
+        where TRequest : IRequest<TResponse>
     {
         throw new InvalidOperationException("Pipeline error");
     }
@@ -121,10 +128,10 @@ public class ExecutionTracker
     public List<string> Log { get; } = [];
 }
 
-public class OrderTrackingBehavior<TRequest, TResponse>(ExecutionTracker tracker) : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+public class OrderTrackingBehavior(ExecutionTracker tracker) : IPipelineBehavior
 {
-    public async Task<TResponse> HandleAsync(TRequest request, NextStep<TResponse> nextHandler, CancellationToken cancellationToken)
+    public async Task<TResponse> HandleAsync<TRequest, TResponse>(TRequest request, NextStep<TResponse> nextHandler, CancellationToken cancellationToken)
+        where TRequest : IRequest<TResponse>
     {
         tracker.Log.Add($"Before:{typeof(TRequest).Name}");
         var result = await nextHandler();

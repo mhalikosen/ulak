@@ -2,7 +2,11 @@ namespace Ulak;
 
 public delegate Task<TResponse> NextStep<TResponse>();
 
-public interface IPipelineBehavior<in TRequest, TResponse> where TRequest : IRequest<TResponse>
+public interface IPipelineBehavior
 {
-    public Task<TResponse> HandleAsync(TRequest request, NextStep<TResponse> nextHandler, CancellationToken cancellationToken);
+    Task<TResponse> HandleAsync<TRequest, TResponse>(
+        TRequest request,
+        NextStep<TResponse> nextHandler,
+        CancellationToken cancellationToken)
+        where TRequest : IRequest<TResponse>;
 }

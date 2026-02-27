@@ -16,14 +16,11 @@ public static class ServiceCollectionExtensions
         typeof(IQueryHandler<,>)
     ];
 
-    public static IServiceCollection AddUlak(this IServiceCollection services, params Assembly[] assemblies)
+    public static IServiceCollection AddUlak(this IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(assemblies);
-        ArgumentOutOfRangeException.ThrowIfZero(assemblies.Length);
-
         services.TryAddScoped<ISender, Sender>();
 
-        foreach (var assembly in assemblies)
+        foreach (var assembly in GetApplicationAssemblies())
         {
             RegisterHandlers(services, assembly);
         }
@@ -31,62 +28,41 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddUlakBehavior(this IServiceCollection services, Type behaviorType)
+    public static IServiceCollection AddUlak(this IServiceCollection services, Action<UlakOptions> configure)
     {
-        ArgumentNullException.ThrowIfNull(behaviorType);
+        ArgumentNullException.ThrowIfNull(configure);
 
-        if (behaviorType.IsGenericTypeDefinition)
+        services.AddUlak();
+
+        var options = new UlakOptions();
+        configure(options);
+
+        foreach (var behaviorType in options.BehaviorTypes)
         {
-            var implementsPipelineBehavior = behaviorType.GetInterfaces()
-                .Any(interfaceType =>
-                    interfaceType.IsGenericType &&
-                    interfaceType.GetGenericTypeDefinition() == typeof(IPipelineBehavior<,>));
-
-            if (!implementsPipelineBehavior)
-            {
-                throw new ArgumentException(
-                    $"Type '{behaviorType.Name}' must implement IPipelineBehavior<TRequest, TResponse>.",
-                    nameof(behaviorType));
-            }
-
-            var alreadyRegistered = services.Any(descriptor =>
-                descriptor.ServiceType == typeof(IPipelineBehavior<,>) &&
-                descriptor.ImplementationType == behaviorType);
-
-            if (!alreadyRegistered)
-            {
-                services.AddScoped(typeof(IPipelineBehavior<,>), behaviorType);
-            }
-        }
-        else
-        {
-            var pipelineInterfaces = behaviorType.GetInterfaces()
-                .Where(interfaceType =>
-                    interfaceType.IsGenericType &&
-                    interfaceType.GetGenericTypeDefinition() == typeof(IPipelineBehavior<,>))
-                .ToArray();
-
-            if (pipelineInterfaces.Length == 0)
-            {
-                throw new ArgumentException(
-                    $"Type '{behaviorType.Name}' must implement IPipelineBehavior<TRequest, TResponse>.",
-                    nameof(behaviorType));
-            }
-
-            foreach (var pipelineInterface in pipelineInterfaces)
-            {
-                var alreadyRegistered = services.Any(descriptor =>
-                    descriptor.ServiceType == pipelineInterface &&
-                    descriptor.ImplementationType == behaviorType);
-
-                if (!alreadyRegistered)
-                {
-                    services.AddScoped(pipelineInterface, behaviorType);
-                }
-            }
+            services.AddScoped(typeof(IPipelineBehavior), behaviorType);
         }
 
         return services;
+    }
+
+    private static Assembly[] GetApplicationAssemblies()
+    {
+        return AppDomain.CurrentDomain.GetAssemblies()
+            .Where(assembly => !IsFrameworkAssembly(assembly))
+            .ToArray();
+    }
+
+    private static bool IsFrameworkAssembly(Assembly assembly)
+    {
+        if (assembly.IsDynamic) return true;
+
+        var name = assembly.GetName().Name;
+        if (name is null) return true;
+
+        return name.StartsWith("System", StringComparison.Ordinal) ||
+               name.StartsWith("Microsoft", StringComparison.Ordinal) ||
+               name.StartsWith("mscorlib", StringComparison.Ordinal) ||
+               name.StartsWith("netstandard", StringComparison.Ordinal);
     }
 
     private static void RegisterHandlers(IServiceCollection services, Assembly assembly)
